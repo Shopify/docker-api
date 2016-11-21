@@ -158,9 +158,15 @@ class Docker::Container
     connection.get(path_for(:logs), opts)
   end
 
-  # TODO: Implement Streaming stats
   def stats
-    Docker::Util.parse_json(connection.get(path_for(:stats), {stream: 0}))
+    if block_given?
+      parser = lambda do |chunk, remaining_bytes, total_bytes|
+        yield Docker::Util.parse_json(chunk)
+      end
+      connection.get(path_for(:stats), nil, response_block: parser)
+    else
+      Docker::Util.parse_json(connection.get(path_for(:stats), {stream: 0}))
+    end
   end
 
   def rename(new_name)

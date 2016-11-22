@@ -158,14 +158,16 @@ class Docker::Container
     connection.get(path_for(:logs), opts)
   end
 
-  def stats
+  def stats(options = {})
     if block_given?
+      options[:read_timeout] ||= 10
+      options[:idempotent] ||= false
       parser = lambda do |chunk, remaining_bytes, total_bytes|
         yield Docker::Util.parse_json(chunk)
       end
-      connection.get(path_for(:stats), nil, response_block: parser)
+      connection.get(path_for(:stats), nil, {response_block: parser}.merge(options))
     else
-      Docker::Util.parse_json(connection.get(path_for(:stats), {stream: 0}))
+      Docker::Util.parse_json(connection.get(path_for(:stats), {stream: 0}.merge(options)))
     end
   end
 
